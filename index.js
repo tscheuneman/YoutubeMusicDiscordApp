@@ -1,7 +1,6 @@
 const Discord = require('discord.js');
 const ytdl = require('ytdl-core');
 const client = new Discord.Client();
-const axios = require('axios');
 const request = require('request');
 const cheerio = require('cheerio');
 
