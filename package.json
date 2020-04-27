@@ -1,0 +1,22 @@
+{
+  "name": "youtubediscordbot",
+  "version": "0.0.1",
+  "description": "A bot that plays music from youtube",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": {
+    "name": "Thomas Scheuneman",
+    "email": "thomas@tswebvisions.com",
+    "url": "https://github.com/tscheuneman"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "@discordjs/opus": "^0.2.1",
+    "axios": "^0.19.2",
+    "discord.js": "^12.2.0",
+    "dotenv": "^8.2.0",
+    "ytdl-core": "^2.1.1"
+  }
+}
