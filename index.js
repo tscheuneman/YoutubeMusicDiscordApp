@@ -2,12 +2,14 @@ const Discord = require('discord.js');
 const ytdl = require('ytdl-core');
 const client = new Discord.Client();
 const axios = require('axios');
-const fs = require('fs');
-require('dotenv').config()
+const request = require('request');
+const cheerio = require('cheerio');
 
-let activeConnection = null;
+require('dotenv').config();
+
+let activeConnection = {};
 const MESSAGE_DELETE_TIMEOUT = 7500;
-const queue = [];
+const queue = {};
 
 client.on('ready', () => {
   console.log(`Logged in as ${client.user.tag}!`);
@@ -24,7 +26,22 @@ client.on('message', msg => {
     let content = msg.content;
     let result = content.replace('!music', '').trim();
 
+    const guild = msg.guild.id;
     const voiceChannel = msg.member.voice.channel;
+
+    const voiceChannelID = msg.member.voice.channel.id;
+
+    if(queue[guild] === undefined) {
+        queue[guild] = {};
+        if(queue[guild][voiceChannelID] === undefined) {
+            queue[guild][voiceChannelID] = [];
+        }
+    } else {
+        if(queue[guild][voiceChannelID] === undefined) {
+            queue[guild][voiceChannelID] = [];
+        }
+    }
+
 
     if(result === "queue" || result ==='help' || result === "stop" || result === "next" || result === "skip" || result === "pause" || result === "resume" || result.includes('queue remove') || result.includes('queue delete')) {
         switch(result) {
@@ -32,13 +49,13 @@ client.on('message', msg => {
                 sendQueue(msg);
                 break;
             case 'next': case 'skip':
-                goNext(voiceChannel);
+                goNext(voiceChannel, guild);
                 break;
             case 'pause':
-                activeConnection.pause();
+                activeConnection[guild].pause();
                 break;
             case 'resume':
-                activeConnection.resume();
+                activeConnection[guild].resume();
                 break;
             case 'stop':
                 voiceChannel.leave();
@@ -57,9 +74,9 @@ client.on('message', msg => {
                             const from = Number.parseInt(range[0]);
                             const to = Number.parseInt(range[1]);
                             let cnt = 0;
-                            queue.forEach((elm, index) => {
+                            queue[guild][voiceChannel.id].forEach((elm, index) => {
                                 if(cnt >= from && cnt <= to) {
-                                    delete queue[index];
+                                    delete queue[guild][voiceChannel.id][index];
                                 }
                                 cnt++;
                             });
@@ -71,49 +88,61 @@ client.on('message', msg => {
     } else {
         if(!voiceChannel) {
             msg.reply('You need to join a voice channel bruh');
-        } else {            
-            axios.get('https://www.googleapis.com/youtube/v3/search', {
-                params: {
-                    part: 'snippet',
-                    q: result,
-                    topicID: '/m/04rlf',
-                    maxResults: 1,
-                    key: process.env.YOUTUBE_KEY
-                  }
-            }).then(result => {
-                if(result.data.items[0]) {
-                    const videoDetails = result.data.items[0];
-                    const videoTitle = videoDetails.snippet.title;
-                    const videoID = videoDetails.id.videoId;
-                    if(queue.length === 0) {
-                        queue.push({videoTitle, videoID});
-                        playVideo(voiceChannel, {videoTitle, videoID});
-                    } else {
-                        queue.push({videoTitle, videoID});
-                        msg.reply('Added '+decodeURIComponent(videoTitle)+' to queue').then(message => {
-                            message.delete({timeout: MESSAGE_DELETE_TIMEOUT});
-                        }).catch(err => {
-                            console.log(err);
-                        });
-                    }
-    
+        } else {
+            searchForStuff(result).then(result => {
+                if(queue[guild][voiceChannel.id].length === 0) {
+                    queue[guild][voiceChannel.id].push({...result});
+                    playVideo(voiceChannel, {...result}, guild);
+                } else {
+                    queue[guild][voiceChannel.id].push({...result});
+                    msg.reply('Added '+decodeURIComponent(result.videoTitle)+' to queue').then(message => {
+                        message.delete({timeout: MESSAGE_DELETE_TIMEOUT});
+                    }).catch(err => {
+                        console.log(err);
+                    });
                 }
-                
             }).catch(err => {
                 console.log(err);
-                console.log('somethng went wrong');
-            });
-            
+            }); 
         }
     }
     msg.delete();
   }
 });
 
+function searchForStuff(search) {
+    return new Promise((resolve, reject) => {
+        request('http://m.youtube.com/results?search_query='+search, function (error, response, body) {
+            if (!error && response.statusCode == 200) {
+                const $ = cheerio.load(body);
+                let link = $('.yt-lockup-content').first();
+    
+                let href = $('a.yt-uix-tile-link', link).first().attr('href');
+                let title = $('a.yt-uix-tile-link', link).first().attr('title');
+                
+                if(href === undefined) {
+                    href = $('a.yt-uix-tile-link', link).first().attr('href');
+                }
+                href = href.replace('/watch?v=', '');
+                resolve({
+                    videoTitle: title,
+                    videoID: href
+                });
+            }
+            else {
+                reject(response.statusCode);
+            }
+          })
+    });
+}
+
 function sendQueue(msg) {
+    const guild = msg.guild.id;
+    const voiceChannel = msg.member.voice.channel;
+
     let queueString = '';
     let cnt = 0;
-    queue.forEach(elm => {
+    queue[guild][voiceChannel.id].forEach(elm => {
         if(cnt === 0) {
             queueString += '**Now Playing: ' + decodeURIComponent(elm.videoTitle) +'**\n';
         } else {
@@ -121,7 +150,7 @@ function sendQueue(msg) {
         }
         cnt++;
     });
-    if(queue.length === 0) {
+    if(queue[guild][voiceChannel.id].length === 0) {
         msg.reply("The queue is empty").then(message => {
             message.delete({timeout: MESSAGE_DELETE_TIMEOUT});
         }).catch(err => {
@@ -151,32 +180,29 @@ function sendHelpText(msg) {
     }).catch(err => {
         console.log(err);
     });
-
 }
 
-function playVideo(voiceChannel, obj) {
+function playVideo(voiceChannel, obj, guild) {
     voiceChannel.join().then(async connection => {
         const stream = ytdl('https://www.youtube.com/watch?v='+obj.videoID, { filter: 'audioonly' });
-
         const dispatcher = connection.play(stream, {bitrate: 256});
-        activeConnection = dispatcher;
+        activeConnection[guild] = dispatcher;
         dispatcher.on('finish', () => {
-            goNext(voiceChannel);
+            goNext(voiceChannel, guild);
         });
-    
         dispatcher.on('error', (err) => {
             console.log(err);
         });
     });
 }
 
-function goNext(voiceChannel) {
-    if(queue.length > 0) {
-        queue.shift();
-        let tmpQueue = [...queue];
+function goNext(voiceChannel, guild) {
+    if(queue[guild][voiceChannel.id].length > 0) {
+        queue[guild][voiceChannel.id].shift();
+        let tmpQueue = [...queue[guild][voiceChannel.id]];
         let next = tmpQueue.shift();
         if(next) {
-            playVideo(voiceChannel, next);
+            playVideo(voiceChannel, next, guild);
         }
     }
 }
