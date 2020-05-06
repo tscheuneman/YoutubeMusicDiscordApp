@@ -1,14 +1,16 @@
-const Discord = require('discord.js');
-const ytdl = require('ytdl-core');
-const client = new Discord.Client();
-const YoutubeHelper = require('./YoutubeHelper');
-
+import Discord from 'discord.js';
+import ytdl from 'ytdl-core';
 require('dotenv').config();
 
+import YoutubeHelper from './YoutubeHelper';
+import {actionTerms} from './Dictionary';
+
+const client = new Discord.Client();
+const Youtube = new YoutubeHelper();
 let activeConnection = {};
+
 const MESSAGE_DELETE_TIMEOUT = 7500;
 const queue = {};
-const Youtube = new YoutubeHelper();
 
 
 client.on('ready', () => {
@@ -43,7 +45,7 @@ client.on('message', msg => {
     }
 
 
-    if(result === "queue" || result ==='help' || result === "stop" || result === "next" || result === "skip" || result === "pause" || result === "resume" || result.includes('queue remove') || result.includes('queue delete')) {
+    if(actionTerms.includes(result) || result.includes('queue remove') || result.includes('queue delete')) {
         switch(result) {
             case 'queue':
                 sendQueue(msg);
