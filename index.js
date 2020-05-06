@@ -1,14 +1,15 @@
 const Discord = require('discord.js');
 const ytdl = require('ytdl-core');
 const client = new Discord.Client();
-const request = require('request');
-const cheerio = require('cheerio');
+const YoutubeHelper = require('./YoutubeHelper');
 
 require('dotenv').config();
 
 let activeConnection = {};
 const MESSAGE_DELETE_TIMEOUT = 7500;
 const queue = {};
+const Youtube = new YoutubeHelper();
+
 
 client.on('ready', () => {
   console.log(`Logged in as ${client.user.tag}!`);
@@ -88,7 +89,7 @@ client.on('message', msg => {
         if(!voiceChannel) {
             msg.reply('You need to join a voice channel bruh');
         } else {
-            searchForStuff(result).then(result => {
+            Youtube.searchYoutube(result).then(result => {
                 if(queue[guild][voiceChannel.id].length === 0) {
                     queue[guild][voiceChannel.id].push({...result});
                     playVideo(voiceChannel, {...result}, guild);
@@ -108,32 +109,6 @@ client.on('message', msg => {
     msg.delete();
   }
 });
-
-function searchForStuff(search) {
-    return new Promise((resolve, reject) => {
-        request('http://m.youtube.com/results?search_query='+search, function (error, response, body) {
-            if (!error && response.statusCode == 200) {
-                const $ = cheerio.load(body);
-                let link = $('.yt-lockup-content').first();
-    
-                let href = $('a.yt-uix-tile-link', link).first().attr('href');
-                let title = $('a.yt-uix-tile-link', link).first().attr('title');
-                
-                if(href === undefined) {
-                    href = $('a.yt-uix-tile-link', link).first().attr('href');
-                }
-                href = href.replace('/watch?v=', '');
-                resolve({
-                    videoTitle: title,
-                    videoID: href
-                });
-            }
-            else {
-                reject(response.statusCode);
-            }
-          })
-    });
-}
 
 function sendQueue(msg) {
     const guild = msg.guild.id;
@@ -192,6 +167,8 @@ function playVideo(voiceChannel, obj, guild) {
         dispatcher.on('error', (err) => {
             console.log(err);
         });
+    }).catch(err => {
+        console.log(err);
     });
 }
 
