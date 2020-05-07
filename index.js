@@ -1,9 +1,10 @@
 import Discord from 'discord.js';
 import ytdl from 'ytdl-core';
-require('dotenv').config();
+import dotenv from 'dotenv'
+dotenv.config();
 
-import YoutubeHelper from './YoutubeHelper';
-import {actionTerms} from './Dictionary';
+import YoutubeHelper from './YoutubeHelper.js';
+import {actionTerms, helpTerms} from './Dictionary.js';
 
 const client = new Discord.Client();
 const Youtube = new YoutubeHelper();
@@ -44,6 +45,8 @@ client.on('message', msg => {
         }
     }
 
+    let msgTimeout = MESSAGE_DELETE_TIMEOUT;
+
 
     if(actionTerms.includes(result) || result.includes('queue remove') || result.includes('queue delete')) {
         switch(result) {
@@ -64,6 +67,7 @@ client.on('message', msg => {
                 break;
             case 'help':
                 sendHelpText(msg);
+                msgTimeout = 10000;
                 break;
             default:
                 if(result.includes('queue remove') || result.includes('queue delete')) {
@@ -108,7 +112,9 @@ client.on('message', msg => {
             }); 
         }
     }
-    msg.delete();
+    setTimeout(() => {
+        msg.delete();
+      }, msgTimeout);
   }
 });
 
@@ -144,12 +150,10 @@ function sendQueue(msg) {
 function sendHelpText(msg) {
     let returnString = 'These are the commands\n';
 
-    returnString += '**queue** - *Show the queue*\n';
-    returnString += '**next | skip** - *Go to next song*\n';
-    returnString += '**pause** - *Pause the music*\n';
-    returnString += '**resume** - *Resume Music*\n';
-    returnString += '**stop** - *Stop the bot and disconnect*\n';
-    returnString += '**queue delete [start-end]** - *Remove elements from the queue. start and end should be numbers*\n';
+    let terms = Object.keys(helpTerms);
+    terms.forEach((elm) => {
+        returnString += `**${elm}** - *${helpTerms[elm]}\n`;
+    });
 
     msg.reply(returnString).then(message => {
         message.delete({timeout: 20000});

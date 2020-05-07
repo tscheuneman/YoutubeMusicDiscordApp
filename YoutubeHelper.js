@@ -1,6 +1,5 @@
-const request = require('request');
-const cheerio = require('cheerio');
-
+import cheerio from 'cheerio';
+import request from 'request';
 export default class YoutubeHelper {
     constructor() {
 
