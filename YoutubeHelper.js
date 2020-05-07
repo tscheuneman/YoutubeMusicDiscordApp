@@ -16,18 +16,23 @@ export default class YoutubeHelper {
                     let title = $('a.yt-uix-tile-link', link).first().attr('title');
                     
                     if(href === undefined) {
-                        href = $('a.yt-uix-tile-link', link).first().attr('href');
-                    }
-                    href = href.replace('/watch?v=', '');
-                    if(href !== undefined) {
                         resolve({
-                            videoTitle: title,
-                            videoID: href
+                            videoTitle: 'Error, Not Found',
+                            videoID: '0lhhrUuw2N8'
                         });
                     } else {
-                        console.log(error);
-                        console.log(response);
-                        reject(response.statusCode);
+                        href = href.replace('/watch?v=', '');
+                        if(href !== undefined) {
+                            resolve({
+                                videoTitle: title,
+                                videoID: href
+                            });
+                        } else {
+                            console.log(error);
+                            console.log(response);
+                            reject(response.statusCode);
+                        }
+
                     }
                 }
                 else {
