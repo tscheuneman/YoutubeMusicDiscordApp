@@ -152,7 +152,7 @@ function sendHelpText(msg) {
 
     let terms = Object.keys(helpTerms);
     terms.forEach((elm) => {
-        returnString += `**${elm}** - *${helpTerms[elm]}\n`;
+        returnString += `**${elm}** - *${helpTerms[elm]}*\n`;
     });
 
     msg.reply(returnString).then(message => {
@@ -164,8 +164,8 @@ function sendHelpText(msg) {
 
 function playVideo(voiceChannel, obj, guild) {
     voiceChannel.join().then(async connection => {
-        const stream = ytdl('https://www.youtube.com/watch?v='+obj.videoID, { filter: 'audioonly' });
-        const dispatcher = connection.play(stream, {bitrate: 256});
+        const stream = ytdl('https://www.youtube.com/watch?v='+obj.videoID, { quality: 'highestaudio', filter: 'audioonly' });
+        const dispatcher = connection.play(stream, {volume: 0.5, bitrate: 256});
         activeConnection[guild] = dispatcher;
         dispatcher.on('finish', () => {
             goNext(voiceChannel, guild);
@@ -179,7 +179,7 @@ function playVideo(voiceChannel, obj, guild) {
 }
 
 function goNext(voiceChannel, guild) {
-    if(queue[guild][voiceChannel.id].length > 0) {
+    if(queue[guild][voiceChannel.id].length > 1) {
         queue[guild][voiceChannel.id].shift();
         let tmpQueue = [...queue[guild][voiceChannel.id]];
         let next = tmpQueue.shift();
