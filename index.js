@@ -13,6 +13,7 @@ let activeConnection = {};
 const MESSAGE_DELETE_TIMEOUT = 7500;
 const queue = {};
 
+let activator = process.env.ACTIVATOR ? process.env.ACTIVATOR : '!music';
 
 client.on('ready', () => {
   console.log(`Logged in as ${client.user.tag}!`);
@@ -21,13 +22,13 @@ client.on('ready', () => {
 client.on('message', msg => {
   let goOn = false;
 
-    if(msg.content.startsWith('!music')) {
+    if(msg.content.startsWith(activator)) {
         goOn = true;
     }
 
   if (goOn) {
     let content = msg.content;
-    let result = content.replace('!music', '').trim();
+    let result = content.replace(activator, '').trim();
 
     const guild = msg.guild.id;
     const voiceChannel = msg.member.voice.channel;
