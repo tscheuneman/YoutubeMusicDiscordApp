@@ -3,8 +3,8 @@ import ytdl from 'ytdl-core';
 import dotenv from 'dotenv'
 dotenv.config();
 
-import YoutubeHelper from './YoutubeHelper.js';
-import {actionTerms, helpTerms} from './Dictionary.js';
+import YoutubeHelper from './Helpers/YoutubeHelper.js';
+import {actionTerms, helpTerms} from './Helpers/Dictionary.js';
 
 const client = new Discord.Client();
 const Youtube = new YoutubeHelper();
@@ -32,19 +32,9 @@ client.on('message', msg => {
     const guild = msg.guild.id;
     const voiceChannel = msg.member.voice.channel;
 
-    const voiceChannelID = msg.member.voice.channel.id;
-
     if(queue[guild] === undefined) {
-        queue[guild] = {};
-        if(queue[guild][voiceChannelID] === undefined) {
-            queue[guild][voiceChannelID] = [];
-        }
-    } else {
-        if(queue[guild][voiceChannelID] === undefined) {
-            queue[guild][voiceChannelID] = [];
-        }
+        queue[guild] = [];
     }
-
     let msgTimeout = MESSAGE_DELETE_TIMEOUT;
 
 
@@ -80,9 +70,9 @@ client.on('message', msg => {
                             const from = Number.parseInt(range[0]);
                             const to = Number.parseInt(range[1]);
                             let cnt = 0;
-                            queue[guild][voiceChannel.id].forEach((elm, index) => {
+                            queue[guild].forEach((elm, index) => {
                                 if(cnt >= from && cnt <= to) {
-                                    delete queue[guild][voiceChannel.id][index];
+                                    delete queue[guild][index];
                                 }
                                 cnt++;
                             });
@@ -96,11 +86,11 @@ client.on('message', msg => {
             msg.reply('You need to join a voice channel bruh');
         } else {
             Youtube.searchYoutube(result).then(result => {
-                if(queue[guild][voiceChannel.id].length === 0) {
-                    queue[guild][voiceChannel.id].push({...result});
+                if(queue[guild].length === 0) {
+                    queue[guild].push({...result});
                     playVideo(voiceChannel, {...result}, guild);
                 } else {
-                    queue[guild][voiceChannel.id].push({...result});
+                    queue[guild].push({...result});
                     msg.reply('Added '+decodeURIComponent(result.videoTitle)+' to queue').then(message => {
                         message.delete({timeout: MESSAGE_DELETE_TIMEOUT});
                     }).catch(err => {
@@ -120,11 +110,10 @@ client.on('message', msg => {
 
 function sendQueue(msg) {
     const guild = msg.guild.id;
-    const voiceChannel = msg.member.voice.channel;
 
     let queueString = '';
     let cnt = 0;
-    queue[guild][voiceChannel.id].forEach(elm => {
+    queue[guild].forEach(elm => {
         if(cnt === 0) {
             queueString += '**Now Playing: ' + decodeURIComponent(elm.videoTitle) +'**\n';
         } else {
@@ -132,7 +121,7 @@ function sendQueue(msg) {
         }
         cnt++;
     });
-    if(queue[guild][voiceChannel.id].length === 0) {
+    if(queue[guild].length === 0) {
         msg.reply("The queue is empty").then(message => {
             message.delete({timeout: MESSAGE_DELETE_TIMEOUT});
         }).catch(err => {
@@ -179,9 +168,9 @@ function playVideo(voiceChannel, obj, guild) {
 }
 
 function goNext(voiceChannel, guild) {
-    if(queue[guild][voiceChannel.id].length > 1) {
-        queue[guild][voiceChannel.id].shift();
-        let tmpQueue = [...queue[guild][voiceChannel.id]];
+    if(queue[guild].length > 1) {
+        queue[guild].shift();
+        let tmpQueue = [...queue[guild]];
         let next = tmpQueue.shift();
         if(next) {
             playVideo(voiceChannel, next, guild);
