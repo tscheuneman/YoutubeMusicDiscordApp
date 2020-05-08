@@ -27,7 +27,7 @@ client.on('message', msg => {
     if(msg.content.startsWith(activator)) {
         goOn = true;
     }
-    if(videoActivator) {
+    if(msg.content.startsWith(videoActivator)) {
         let content = msg.content;
         let result = content.replace(videoActivator, '').trim();
 
