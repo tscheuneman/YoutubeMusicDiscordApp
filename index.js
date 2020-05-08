@@ -11,9 +11,11 @@ const Youtube = new YoutubeHelper();
 let activeConnection = {};
 
 const MESSAGE_DELETE_TIMEOUT = 7500;
+const QUEUE_MESSAGE_TIMEOUT = 15000;
 const queue = {};
 
 let activator = process.env.ACTIVATOR ? process.env.ACTIVATOR : '!music';
+let videoActivator = process.env.VIDEO_ACTIVATOR ? process.env.VIDEO_ACTIVATOR : '!video';
 
 client.on('ready', () => {
   console.log(`Logged in as ${client.user.tag}!`);
@@ -24,6 +26,12 @@ client.on('message', msg => {
 
     if(msg.content.startsWith(activator)) {
         goOn = true;
+    }
+    if(videoActivator) {
+        let content = msg.content;
+        let result = content.replace(videoActivator, '').trim();
+
+        postVideo(msg, result);
     }
 
   if (goOn) {
@@ -109,6 +117,14 @@ client.on('message', msg => {
   }
 });
 
+function postVideo(msg, result) {
+    Youtube.searchYoutube(result).then(result => {
+        msg.reply(`Here's ${result.videoTitle} https://www.youtube.com/watch?v=${result.videoID}`)
+    }).catch(err => {
+        console.log(err);
+    }); 
+}
+
 function sendQueue(msg) {
     const guild = msg.guild.id;
 
@@ -130,7 +146,7 @@ function sendQueue(msg) {
         });
     } else {
         msg.reply("The queue looks like this\n"+queueString).then(message => {
-            message.delete({timeout: MESSAGE_DELETE_TIMEOUT});
+            message.delete({timeout: QUEUE_MESSAGE_TIMEOUT});
         }).catch(err => {
             console.log(err);
         });
