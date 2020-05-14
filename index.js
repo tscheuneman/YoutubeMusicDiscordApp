@@ -62,6 +62,7 @@ client.on('message', msg => {
                 activeConnection[guild].resume();
                 break;
             case 'stop':
+                queue[guild] = [];
                 voiceChannel.leave();
                 break;
             case 'help':
