@@ -1,6 +1,7 @@
 import Discord from 'discord.js';
 import ytdl from 'ytdl-core';
 import dotenv from 'dotenv'
+import fs from 'fs';
 dotenv.config();
 
 import YoutubeHelper from './Helpers/YoutubeHelper.js';
@@ -16,6 +17,7 @@ const queue = {};
 
 let activator = process.env.ACTIVATOR ? process.env.ACTIVATOR : '!music';
 let videoActivator = process.env.VIDEO_ACTIVATOR ? process.env.VIDEO_ACTIVATOR : '!video';
+let downloadActivator = process.env.DOWNLOAD_ACTIVATOR ? process.env.DOWNLOAD_ACTIVATOR : '!download';
 
 client.on('ready', () => {
   console.log(`Logged in as ${client.user.tag}!`);
@@ -26,6 +28,11 @@ client.on('message', msg => {
 
     if(msg.content.startsWith(activator)) {
         goOn = true;
+    }
+    if(msg.content.startsWith(downloadActivator)) {
+        let content = msg.content;
+        let result = content.replace(videoActivator, '').trim();
+        downloadVideo(result, msg);
     }
     if(msg.content.startsWith(videoActivator)) {
         let content = msg.content;
@@ -167,6 +174,28 @@ function sendHelpText(msg) {
     }).catch(err => {
         console.log(err);
     });
+}
+
+function downloadVideo(message, msg) {
+    Youtube.searchYoutube(message).then(async obj => {
+        if(!fs.existsSync(`Music/${obj.videoTitle}.mp3`)) {
+            const video = ytdl('https://www.youtube.com/watch?v='+obj.videoID, { quality: 'highestaudio', filter: 'audioonly' }).pipe(fs.createWriteStream(`./Music/${obj.videoTitle}.mp3`));
+            video.on('finish', () => {
+                returnDownload(msg, obj);
+            });
+        } else {
+            returnDownload(msg, obj);
+        }
+
+    }).catch(err => {
+        console.log(err);
+    }); 
+}
+
+function returnDownload(msg, obj) {
+    const buffer = fs.readFileSync(`./Music/${obj.videoTitle}.mp3`);
+    const attachment = new Discord.MessageAttachment(buffer, `${obj.videoTitle}.mp3`);
+    msg.reply(`Here's ${obj.videoTitle}`, attachment)
 }
 
 function playVideo(voiceChannel, obj, guild) {
