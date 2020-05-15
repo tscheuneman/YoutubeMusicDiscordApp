@@ -198,7 +198,7 @@ function returnDownload(msg, obj) {
     msg.reply(`Here's ${obj.videoTitle}`, attachment);
     setTimeout(() => {
         msg.delete();
-      }, msgTimeout);
+      }, MESSAGE_DELETE_TIMEOUT);
 }
 
 function playVideo(voiceChannel, obj, guild) {
