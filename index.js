@@ -196,9 +196,7 @@ function returnDownload(msg, obj) {
     const buffer = fs.readFileSync(`./Music/${obj.videoTitle}.mp3`);
     const attachment = new Discord.MessageAttachment(buffer, `${obj.videoTitle}.mp3`);
     msg.reply(`Here's ${obj.videoTitle}`, attachment);
-    setTimeout(() => {
-        msg.delete();
-      }, MESSAGE_DELETE_TIMEOUT);
+    msg.delete();
 }
 
 function playVideo(voiceChannel, obj, guild) {
