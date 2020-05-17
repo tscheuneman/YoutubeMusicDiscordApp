@@ -5,6 +5,7 @@ A discord bot that enters the requesters voice channel and plays music from YouT
 ## Prerequisites:
 **Node**: 14.2.0 (As tested)
 **@discordjs/opus***: May need build-essential on Ubuntu
+**ffmpeg**
 
 ## To Use:
 #### ENV
