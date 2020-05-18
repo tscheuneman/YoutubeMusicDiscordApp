@@ -201,18 +201,17 @@ function returnDownload(msg, obj) {
 
 function playVideo(voiceChannel, obj, guild) {
     voiceChannel.join().then(async connection => {
-        if(obj.videoID === undefined) {
+        if(obj.videoID === undefined || !ytdl.validateID(obj.videoID)) {
             goNext(voiceChannel, guild);
         } else {
             const stream = ytdl('https://www.youtube.com/watch?v='+obj.videoID, { highWaterMark: 1<<25, quality: 'highestaudio', filter: 'audioonly' });
             const dispatcher = connection.play(stream, {volume: 0.5, bitrate: 256});
             activeConnection[guild] = dispatcher;
             stream.on('end', (reason) => {
-                console.log('ended song');
                 goNext(voiceChannel, guild);
             });
             stream.on('error', (reason) => {
-                console.log('error song');
+                console.log(reason);
                 goNext(voiceChannel, guild);
             });
             dispatcher.on('error', (err) => {
