@@ -179,10 +179,7 @@ function sendHelpText(msg) {
 function downloadVideo(message, msg) {
     Youtube.searchYoutube(message).then(async obj => {
         if(!fs.existsSync(`Music/${obj.videoTitle}.mp3`)) {
-            const video = ytdl('https://www.youtube.com/watch?v='+obj.videoID, { quality: 'highestaudio', filter: 'audioonly' }).pipe(fs.createWriteStream(`./Music/${obj.videoTitle}.mp3`));
-            video.on('finish', () => {
-                returnDownload(msg, obj);
-            });
+            const video = ytdl('https://www.youtube.com/watch?v='+obj.videoID, { highWaterMark: 1<<25, quality: 'highestaudio', filter: 'audioonly' }).pipe(fs.createWriteStream(`./Music/${obj.videoTitle}.mp3`));
             video.on('end', () => {
                 returnDownload(msg, obj);
             });
@@ -210,10 +207,6 @@ function playVideo(voiceChannel, obj, guild) {
             const stream = ytdl('https://www.youtube.com/watch?v='+obj.videoID, { highWaterMark: 1<<25, quality: 'highestaudio', filter: 'audioonly' });
             const dispatcher = connection.play(stream, {volume: 0.5, bitrate: 256});
             activeConnection[guild] = dispatcher;
-            stream.on('finish', (reason) => {
-                console.log('finished song');
-                goNext(voiceChannel, guild);
-            });
             stream.on('end', (reason) => {
                 console.log('ended song');
                 goNext(voiceChannel, guild);
@@ -222,16 +215,10 @@ function playVideo(voiceChannel, obj, guild) {
                 console.log('error song');
                 goNext(voiceChannel, guild);
             });
-            /*
-            dispatcher.on('finish', () => {
-                
-            });
-            */
             dispatcher.on('error', (err) => {
                 console.log(err);
             });
         }
-
     }).catch(err => {
         console.log(err);
     });
