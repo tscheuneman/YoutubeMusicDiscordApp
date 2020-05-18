@@ -183,6 +183,9 @@ function downloadVideo(message, msg) {
             video.on('finish', () => {
                 returnDownload(msg, obj);
             });
+            video.on('end', () => {
+                returnDownload(msg, obj);
+            });
         } else {
             returnDownload(msg, obj);
         }
@@ -205,12 +208,15 @@ function playVideo(voiceChannel, obj, guild) {
         const dispatcher = connection.play(stream, {volume: 0.5, bitrate: 256});
         activeConnection[guild] = dispatcher;
         stream.on('finish', () => {
+            console.log('finished song');
             goNext(voiceChannel, guild);
         });
         stream.on('end', () => {
+            console.log('ended song');
             goNext(voiceChannel, guild);
         });
         stream.on('error', () => {
+            console.log('error song');
             goNext(voiceChannel, guild);
         });
         /*
