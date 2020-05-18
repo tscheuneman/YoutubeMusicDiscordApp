@@ -201,7 +201,7 @@ function returnDownload(msg, obj) {
 
 function playVideo(voiceChannel, obj, guild) {
     voiceChannel.join().then(async connection => {
-        if(obj.videoID === undefined || !ytdl.validateID(obj.videoID)) {
+        if(obj.videoID === undefined || !ytdl.validateID(obj.videoID) || !ytdl.validateURL('https://www.youtube.com/watch?v='+obj.videoID)) {
             goNext(voiceChannel, guild);
         } else {
             const stream = ytdl('https://www.youtube.com/watch?v='+obj.videoID, { highWaterMark: 1<<25, quality: 'highestaudio', filter: 'audioonly' });
