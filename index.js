@@ -207,18 +207,18 @@ function playVideo(voiceChannel, obj, guild) {
         if(obj.videoID === undefined) {
             goNext(voiceChannel, guild);
         } else {
-            const stream = ytdl('https://www.youtube.com/watch?v='+obj.videoID, { quality: 'highestaudio', filter: 'audioonly' });
+            const stream = ytdl('https://www.youtube.com/watch?v='+obj.videoID, { highWaterMark: 1<<25, quality: 'highestaudio', filter: 'audioonly' });
             const dispatcher = connection.play(stream, {volume: 0.5, bitrate: 256});
             activeConnection[guild] = dispatcher;
-            stream.on('finish', () => {
+            stream.on('finish', (reason) => {
                 console.log('finished song');
                 goNext(voiceChannel, guild);
             });
-            stream.on('end', () => {
+            stream.on('end', (reason) => {
                 console.log('ended song');
                 goNext(voiceChannel, guild);
             });
-            stream.on('error', () => {
+            stream.on('error', (reason) => {
                 console.log('error song');
                 goNext(voiceChannel, guild);
             });
