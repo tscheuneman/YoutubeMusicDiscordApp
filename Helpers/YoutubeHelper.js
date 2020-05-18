@@ -8,6 +8,12 @@ export default class YoutubeHelper {
 
     searchYoutube(term) {
         return new Promise((resolve, reject) => {
+            if(typeof(term) !== 'string') {
+                resolve({
+                    videoTitle: 'Error, Not Found',
+                    videoID: '0lhhrUuw2N8'
+                });
+            }
             request('http://m.youtube.com/results?search_query='+term, function (error, response, body) {
                 if (!error && response.statusCode == 200) {
                     const $ = cheerio.load(body);

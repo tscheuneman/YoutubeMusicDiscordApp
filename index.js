@@ -204,9 +204,20 @@ function playVideo(voiceChannel, obj, guild) {
         const stream = ytdl('https://www.youtube.com/watch?v='+obj.videoID, { quality: 'highestaudio', filter: 'audioonly' });
         const dispatcher = connection.play(stream, {volume: 0.5, bitrate: 256});
         activeConnection[guild] = dispatcher;
-        dispatcher.on('finish', () => {
+        stream.on('finish', () => {
             goNext(voiceChannel, guild);
         });
+        stream.on('end', () => {
+            goNext(voiceChannel, guild);
+        });
+        stream.on('error', () => {
+            goNext(voiceChannel, guild);
+        });
+        /*
+        dispatcher.on('finish', () => {
+            
+        });
+        */
         dispatcher.on('error', (err) => {
             console.log(err);
         });
