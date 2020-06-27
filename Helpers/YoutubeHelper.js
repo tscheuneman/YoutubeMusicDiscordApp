@@ -50,7 +50,10 @@ export default class YoutubeHelper {
                         }
                       });
                 } catch(err) {
-                    reject('not worky');
+                    resolve({
+                        videoTitle: 'Error, Not Found',
+                        videoID: '0lhhrUuw2N8'
+                    });
                     console.log(err);
                 }
             }

@@ -234,7 +234,7 @@ function playVideo(voiceChannel, obj, guild) {
 }
 
 function goNext(voiceChannel, guild) {
-    if(queue[guild].length > 1) {
+    if(queue[guild].length >= 1) {
         queue[guild].shift();
         let tmpQueue = [...queue[guild]];
         let next = tmpQueue.shift();
